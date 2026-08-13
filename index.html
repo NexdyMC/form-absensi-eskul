@@ -30,14 +30,14 @@
         <div class="overflow-hidden bg-white rounded-2xl border border-blue-100 shadow-xl">
             <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
                 <h2 class="text-xl font-bold text-blue-800">Form Absensi Harian</h2>
-                <p class="text-sm text-blue-600">Silakan isi data kehadiranmu untuk hari ini.</p>
+                <p class="text-sm text-blue-600">Masukan data kehadiran hari ini.</p>
             </div>
 
             <form id="absensiForm" class="p-6 space-y-6">
                 <!-- Nama -->
                 <div>
                     <label class="block mb-2 text-sm font-semibold text-slate-700">Nama Lengkap</label>
-                    <input type="text" id="nama" name="entry.422194647" placeholder="Contoh: Febri Pratama" required
+                    <input type="text" id="nama" name="entry.422194647" placeholder="Contoh: Tim Berners-Lee" required
                         class="px-4 py-3 w-full rounded-lg border transition-all outline-none border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                 </div>
 
@@ -69,12 +69,11 @@
                 <!-- Tanggal (Otomatis) -->
                 <div>
                     <label class="block mb-2 text-sm font-semibold text-slate-700">Tanggal</label>
-                    <!-- Input date akan otomatis diisi format YYYY-MM-DD oleh JS di bawah -->
                     <input type="date" id="tanggal" name="entry.1662397548" readonly
                         class="px-4 py-3 w-full rounded-lg border cursor-not-allowed outline-none border-slate-300 bg-slate-100 text-slate-600">
                 </div>
 
-                <!-- Status (Radio Cards Center) -->
+                <!-- Status -->
                 <div>
                     <label class="block mb-2 text-sm font-semibold text-slate-700">Status Kehadiran</label>
                     <div class="grid grid-cols-2 gap-4">

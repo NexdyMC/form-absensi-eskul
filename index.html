@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi - ICSO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="min-h-screen font-sans bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 shadow-lg">
+        <div class="flex gap-4 items-center px-4 py-4 mx-auto max-w-4xl">
+            <!-- Logo ICSO -->
+            <div class="flex overflow-hidden justify-center items-center w-12 h-12 bg-white rounded-full shadow-md">
+                <img src="logo-icso.png" alt="ICSO" class="object-cover w-full h-full rounded-full">
+            </div>
+            <div class="text-white">
+                <h1 class="text-2xl font-bold tracking-wide">ICSO</h1>
+                <p class="text-sm text-blue-100">Informatika Creative Student Organisation</p>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="px-4 py-10 mx-auto max-w-2xl">
+        <div class="overflow-hidden bg-white rounded-2xl border border-blue-100 shadow-xl">
+            <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
+                <h2 class="text-xl font-bold text-blue-800">Form Absensi Harian</h2>
+                <p class="text-sm text-blue-600">Silakan isi data kehadiranmu untuk hari ini.</p>
+            </div>
+
+            <form id="absensiForm" class="p-6 space-y-6">
+                <!-- Nama -->
+                <div>
+                    <label class="block mb-2 text-sm font-semibold text-slate-700">Nama Lengkap</label>
+                    <input type="text" id="nama" name="entry.422194647" placeholder="Contoh: Febri Pratama" required
+                        class="px-4 py-3 w-full rounded-lg border transition-all outline-none border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                </div>
+
+                <!-- Kelas -->
+                <div>
+                    <label class="block mb-2 text-sm font-semibold text-slate-700">Kelas</label>
+                    <select id="kelas" name="entry.1337916217" required
+                        class="px-4 py-3 w-full bg-white rounded-lg border transition-all outline-none border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="" disabled selected>Pilih Kelas</option>
+                        <optgroup label="Rekayasa Perangkat Lunak">
+                            <option value="10 RPL 1">10 RPL 1</option>
+                            <option value="10 RPL 2">10 RPL 2</option>
+                            <option value="10 RPL 3">10 RPL 3</option>
+                            <option value="10 RPL 4">10 RPL 4</option>
+                            <option value="10 RPL 5">10 RPL 5</option>
+                            <option value="10 RPL 6">10 RPL 6</option>
+                            <option value="10 RPL 7">10 RPL 7</option>
+                            <option value="10 RPL 8">10 RPL 8</option>
+                            <option value="10 RPL 9">10 RPL 9</option>
+                        </optgroup>
+                        <optgroup label="Desain Komunikasi Visual">
+                            <option value="10 DKV 1">10 DKV 1</option>
+                            <option value="10 DKV 2">10 DKV 2</option>
+                            <option value="10 DKV 3">10 DKV 3</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Tanggal (Otomatis) -->
+                <div>
+                    <label class="block mb-2 text-sm font-semibold text-slate-700">Tanggal</label>
+                    <!-- Input date akan otomatis diisi format YYYY-MM-DD oleh JS di bawah -->
+                    <input type="date" id="tanggal" name="entry.1662397548" readonly
+                        class="px-4 py-3 w-full rounded-lg border cursor-not-allowed outline-none border-slate-300 bg-slate-100 text-slate-600">
+                </div>
+
+                <!-- Status (Radio Cards Center) -->
+                <div>
+                    <label class="block mb-2 text-sm font-semibold text-slate-700">Status Kehadiran</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="entry.1790518534" value="hadir" class="sr-only peer" required>
+                            <div class="p-4 text-center rounded-xl border-2 transition-all border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-slate-50">
+                                <span class="block text-lg font-bold text-slate-600 peer-checked:text-blue-700">Hadir</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="entry.1790518534" value="tidak hadir" class="sr-only peer">
+                            <div class="p-4 text-center rounded-xl border-2 transition-all border-slate-200 peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-slate-50">
+                                <span class="block text-lg font-bold text-slate-600 peer-checked:text-red-700">Tidak Hadir</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" id="btnSubmit"
+                        class="flex gap-2 justify-center items-center px-6 py-4 w-full font-bold text-white bg-blue-600 rounded-lg shadow-md transition-all hover:bg-blue-700">
+                        <span>Kirim Absensi</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Logic Absensi -->
+    <script>
+        $(document).ready(function() {
+            const LAST_ABSEN_KEY = 'icso_last_absen';
+            const HOURS_24_MS = 24 * 60 * 60 * 1000;
+
+            // 1. Cek LocalStorage (Apakah sudah absen dalam 24 jam terakhir?)
+            const lastAbsen = localStorage.getItem(LAST_ABSEN_KEY);
+            if (lastAbsen) {
+                const timeDiff = Date.now() - parseInt(lastAbsen);
+                if (timeDiff < HOURS_24_MS) {
+                    window.location.href = 'done.html';
+                } else {
+                    localStorage.removeItem(LAST_ABSEN_KEY);
+                }
+            }
+
+            // 2. Set Tanggal Otomatis Hari Ini (Format YYYY-MM-DD)
+            const today = new Date().toISOString().split('T')[0];
+            $('#tanggal').val(today);
+
+            // 3. Handle Form Submit
+            $('#absensiForm').on('submit', function(e) {
+                e.preventDefault(); 
+                
+                // Ubah text tombol saat loading
+                const $btn = $('#btnSubmit');
+                const originalText = $btn.html();
+                $btn.html('Mengirim...').prop('disabled', true);
+
+                // URL Action FormResponse Google Form
+                const googleFormActionURL = "https://docs.google.com/forms/d/e/1FAIpQLSfFflMMoE73G9QSCu7fO712tCHHaHqC1lCSScbupm301ctRhw/formResponse";
+                
+                // Mengambil data dari form
+                const formData = $(this).serialize();
+
+                // Mengirim ke Google Form secara background menggunakan AJAX
+                $.ajax({
+                    url: googleFormActionURL,
+                    data: formData,
+                    type: "POST",
+                    dataType: "xml",
+                    statusCode: {
+                        0: function() {
+                            simpanDanPindah();
+                        },
+                        200: function() {
+                            simpanDanPindah();
+                        }
+                    }
+                });
+            });
+
+            function simpanDanPindah() {
+                localStorage.setItem(LAST_ABSEN_KEY, Date.now());
+                window.location.href = 'done.html';
+            }
+        });
+    </script>
+</body>
+</html>

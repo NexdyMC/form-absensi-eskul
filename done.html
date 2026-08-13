@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selesai - ICSO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="flex justify-center items-center p-4 min-h-screen font-sans bg-blue-50 text-slate-800">
+
+    <div class="p-8 w-full max-w-md text-center bg-white rounded-2xl border border-blue-100 shadow-xl">
+        <!-- Ikon Sukses -->
+        <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-blue-600 bg-blue-100 rounded-full">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        
+        <h2 class="mb-2 text-2xl font-bold text-slate-800">Terima Kasih!</h2>
+        <p class="mb-6 leading-relaxed text-slate-600">
+            Absensi kamu sudah tersimpan. Sesi absen akan terbuka dalam 24 jam.
+        </p>
+        
+        <button id="btnReset" class="text-sm underline transition-colors text-slate-300 hover:text-blue-600 decoration-dotted">
+            [Dev Only]
+        </button>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Cek apakah user nekat buka done.html padahal belum absen
+            if (!localStorage.getItem('icso_last_absen')) {
+                window.location.href = 'index.html';
+            }
+
+            // Tombol untuk keperluan testing/development (mereset 24 jam)
+            $('#btnReset').click(function() {
+                localStorage.removeItem('icso_last_absen');
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+</html>

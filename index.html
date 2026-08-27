@@ -1,205 +1,441 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi - ICSO</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-control" content="no-cache, no-store, must-revalidate">
+  <title>Absensi - ICSO</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Decide theme before paint (avoid flash) + guard access
+    (function () {
+      var saved = localStorage.getItem('icso_theme');
+      var theme = saved || 'dark';
+      if (theme === 'light') document.documentElement.classList.remove('dark');
+      else document.documentElement.classList.add('dark');
+
+      var lastAbsen = localStorage.getItem('icso_last_absen');
+      if (lastAbsen) {
+        var HOURS_24_MS = 24 * 60 * 60 * 1000;
+        if (Date.now() - parseInt(lastAbsen, 10) < HOURS_24_MS) {
+          window.location.replace('done.html');
+        }
+      }
+    })();
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Poppins"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eaf6ff', 100: '#d3ecfe', 200: '#a6d9fd', 300: '#72bff2',
+              400: '#4aa4e0', 500: '#2688c9', 600: '#1a6ba6', 700: '#155586',
+              800: '#12456c', 900: '#0d3350',
+            },
+          },
+          keyframes: {
+            floatup: {
+              '0%': { opacity: 0, transform: 'translateY(14px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+            drift: {
+              '0%, 100%': { transform: 'translate(0,0)' },
+              '50%': { transform: 'translate(10px,-14px)' },
+            },
+          },
+          animation: {
+            floatup: 'floatup .55s cubic-bezier(.16,1,.3,1) both',
+            drift: 'drift 9s ease-in-out infinite',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; transition: background-color .3s ease, color .3s ease; }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .bg-app { background-color: #0a1220; }
+    html:not(.dark) .bg-app { background-color: #eef5fb; }
+
+    .bg-card { background-color: #101b2c; border-color: rgba(114, 191, 242, 0.14); }
+    html:not(.dark) .bg-card { background-color: #ffffff; border-color: rgba(38, 136, 201, 0.12); }
+
+    .bg-head { background-color: #0d1826; border-color: rgba(114, 191, 242, 0.14); }
+    html:not(.dark) .bg-head { background-color: #f3f9ff; border-color: rgba(38, 136, 201, 0.12); }
+
+    .txt-main { color: #eef4fb; }
+    html:not(.dark) .txt-main { color: #0e2438; }
+
+    .txt-muted { color: #7f93ab; }
+    html:not(.dark) .txt-muted { color: #4d6b85; }
+
+    input, select {
+      background-color: rgba(255,255,255,0.03);
+      border: 1px solid rgba(114,191,242,0.18);
+      color: inherit;
+    }
+    html:not(.dark) input, html:not(.dark) select {
+      background-color: #fbfdff;
+      border: 1px solid rgba(38,136,201,0.22);
+    }
+    input:focus, select:focus {
+      outline: none; border-color: #4aa4e0;
+      box-shadow: 0 0 0 3px rgba(74,164,224,0.22);
+    }
+    input[readonly] { cursor: not-allowed; opacity: .85; }
+
+    ::selection { background: #2688c9; color: white; }
+
+    .toggle-thumb { transition: transform .3s cubic-bezier(.16,1,.3,1); }
+    .dark .toggle-thumb { transform: translateX(20px); }
+
+    #toast { transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .35s ease; }
+
+    .field-error { border-color: #f36b6b !important; box-shadow: 0 0 0 3px rgba(243,107,107,0.2) !important; }
+
+    /* bubble cluster decoration, echoing the reference image */
+    .bubble { position: absolute; border-radius: 9999px; background: radial-gradient(circle at 32% 28%, #7fc4f2, #2688c9 65%, #155586); opacity: .55; }
+  </style>
 </head>
-<body class="min-h-screen font-sans bg-slate-50 text-slate-800">
 
-    <!-- Navbar -->
-    <nav class="bg-blue-600 shadow-lg">
-        <div class="flex gap-4 items-center px-4 py-4 mx-auto max-w-4xl">
-            <!-- Logo ICSO -->
-            <div class="flex overflow-hidden justify-center items-center w-12 h-12 bg-white rounded-full shadow-md">
-                <img src="logo-icso.png" alt="ICSO" class="object-cover w-full h-full rounded-full">
-            </div>
-            <div class="text-white">
-                <h1 class="text-2xl font-bold tracking-wide">ICSO</h1>
-                <p class="text-sm text-blue-100">Informatika Creative Student Organization</p>
-            </div>
+<body class="bg-app txt-main min-h-screen antialiased">
+
+  <!-- Bubble cluster decoration (fixed, subtle, behind content) -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+    <div class="bubble w-40 h-40 -top-10 -right-10 animate-drift"></div>
+    <div class="bubble w-24 h-24 top-32 -right-6 animate-drift" style="animation-delay:1.2s"></div>
+    <div class="bubble w-16 h-16 top-64 right-16 animate-drift" style="animation-delay:2.4s"></div>
+    <div class="bubble w-52 h-52 -bottom-16 -left-16 animate-drift" style="animation-delay:.6s"></div>
+    <div class="bubble w-20 h-20 bottom-40 left-24 animate-drift" style="animation-delay:1.8s"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="border-b bg-head backdrop-blur-md sticky top-0 z-40" style="border-color: rgba(114,191,242,0.14)">
+    <div class="flex gap-4 justify-between items-center px-4 py-4 mx-auto max-w-4xl">
+      <div class="flex gap-4 items-center">
+        <div class="flex overflow-hidden justify-center items-center w-12 h-12 bg-white rounded-full shadow-md ring-1 ring-brand-400/30">
+          <img src="logo-icso.png" alt="ICSO" class="object-cover w-full h-full rounded-full">
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="px-4 py-10 mx-auto max-w-2xl">
-        <div class="overflow-hidden bg-white rounded-2xl border border-blue-100 shadow-xl">
-            <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
-                <h2 class="text-xl font-bold text-blue-800">Form Absensi Harian</h2>
-                <p class="text-sm text-blue-600">Masukan data kehadiran hari ini.</p>
-            </div>
-
-            <form id="absensiForm" class="p-6 space-y-6">
-                <!-- Nama -->
-                <div>
-                    <label class="block mb-2 text-sm font-semibold text-slate-700">Nama Lengkap</label>
-                    <input type="text" id="nama" name="entry.422194647" placeholder="Contoh: Tim Berners-Lee" required
-                        class="px-4 py-3 w-full rounded-lg border transition-all outline-none border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                </div>
-
-                <!-- Kelas -->
-                <div>
-                    <label class="block mb-2 text-sm font-semibold text-slate-700">Kelas</label>
-                    <select id="kelas" name="entry.1337916217" required
-                        class="px-4 py-3 w-full bg-white rounded-lg border transition-all outline-none border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                        <option value="" disabled selected>Pilih Kelas</option>
-                        <!-- option kelas 10 -->
-                        <optgroup label="Kelas 10 RPL">
-                            <option value="10 RPL 1">10 RPL 1</option>
-                            <option value="10 RPL 2">10 RPL 2</option>
-                            <option value="10 RPL 3">10 RPL 3</option>
-                            <option value="10 RPL 4">10 RPL 4</option>
-                            <option value="10 RPL 5">10 RPL 5</option>
-                            <option value="10 RPL 6">10 RPL 6</option>
-                            <option value="10 RPL 7">10 RPL 7</option>
-                            <option value="10 RPL 8">10 RPL 8</option>
-                            <option value="10 RPL 9">10 RPL 9</option>
-                            <option value="10 RPL 10">10 RPL 10</option>
-                            <option value="10 RPL 11">10 RPL 11</option>
-                        </optgroup>
-                        <optgroup label="Kelas 10 DKV">
-                            <option value="10 DKV 1">10 DKV 1</option>
-                            <option value="10 DKV 2">10 DKV 2</option>
-                            <option value="10 DKV 3">10 DKV 3</option>
-                        </optgroup>
-
-                        <!-- option kelas 11 -->
-                        <optgroup label="Kelas 11 RPL">
-                            <option value="11 RPL 1">11 RPL 1</option>
-                            <option value="11 RPL 2">11 RPL 2</option>
-                            <option value="11 RPL 3">11 RPL 3</option>
-                            <option value="11 RPL 4">11 RPL 4</option>
-                            <option value="11 RPL 5">11 RPL 5</option>
-                            <option value="11 RPL 6">11 RPL 6</option>
-                            <option value="11 RPL 7">11 RPL 7</option>
-                            <option value="11 RPL 8">11 RPL 8</option>
-                            <option value="11 RPL 9">11 RPL 9</option>
-                        </optgroup>
-                        <optgroup label="Kelas 11 DKV">
-                            <option value="11 DKV 1">11 DKV 1</option>
-                            <option value="11 DKV 2">11 DKV 2</option>
-                            <option value="11 DKV 3">11 DKV 3</option>
-                        </optgroup>
-
-                        <!-- option kelas 12 -->
-                        <optgroup label="Kelas 12 RPL">
-                            <option value="12 RPL 1">12 RPL 1</option>
-                            <option value="12 RPL 2">12 RPL 2</option>
-                            <option value="12 RPL 3">12 RPL 3</option>
-                            <option value="12 RPL 4">12 RPL 4</option>
-                            <option value="12 RPL 5">12 RPL 5</option>
-                            <option value="12 RPL 6">12 RPL 6</option>
-                            <option value="12 RPL 7">12 RPL 7</option>
-                            <option value="12 RPL 8">12 RPL 8</option>
-                            <option value="12 RPL 9">12 RPL 9</option>
-                        </optgroup>
-                        <optgroup label="Kelas 12 DKV">
-                            <option value="12 DKV 1">12 DKV 1</option>
-                            <option value="12 DKV 2">12 DKV 2</option>
-                            <option value="12 DKV 3">12 DKV 3</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <!-- Tanggal (Otomatis) -->
-                <div>
-                    <label class="block mb-2 text-sm font-semibold text-slate-700">Tanggal</label>
-                    <input type="date" id="tanggal" name="entry.1662397548" readonly
-                        class="px-4 py-3 w-full rounded-lg border cursor-not-allowed outline-none border-slate-300 bg-slate-100 text-slate-600">
-                </div>
-
-                <!-- Status -->
-                <div>
-                    <label class="block mb-2 text-sm font-semibold text-slate-700">Status Kehadiran</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="entry.1790518534" value="hadir" class="sr-only peer" required>
-                            <div class="p-4 text-center rounded-xl border-2 transition-all border-slate-200 peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-slate-50">
-                                <span class="block text-lg font-bold text-slate-600 peer-checked:text-green-700">Hadir</span>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="entry.1790518534" value="tidak hadir" class="sr-only peer">
-                            <div class="p-4 text-center rounded-xl border-2 transition-all border-slate-200 peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-slate-50">
-                                <span class="block text-lg font-bold text-slate-600 peer-checked:text-red-700">Tidak Hadir</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="pt-4">
-                    <button type="submit" id="btnSubmit"
-                        class="flex gap-2 justify-center items-center px-6 py-4 w-full font-bold text-white bg-blue-600 rounded-lg shadow-md transition-all hover:bg-blue-700">
-                        <span>Kirim Absensi</span>
-                    </button>
-                </div>
-            </form>
+        <div>
+          <h1 class="font-display text-xl sm:text-2xl font-bold tracking-wide txt-main">ICSO</h1>
+          <p class="text-xs sm:text-sm txt-muted">Informatika Creative Student Organization</p>
         </div>
-    </main>
+      </div>
 
-    <!-- Logic Absensi -->
-    <script>
-        $(document).ready(function() {
-            const LAST_ABSEN_KEY = 'icso_last_absen';
-            const HOURS_24_MS = 24 * 60 * 60 * 1000;
+      <!-- Theme toggle -->
+      <button id="themeToggle" type="button" aria-label="Ganti tema terang / gelap"
+        class="relative w-12 h-7 rounded-full flex items-center px-1 bg-brand-900/60 border border-brand-400/30 hover:border-brand-400/60 transition-colors shrink-0">
+        <span class="toggle-thumb w-5 h-5 rounded-full bg-gradient-to-br from-brand-300 to-brand-600 shadow flex items-center justify-center">
+          <i id="themeIcon" class="fa-solid fa-moon text-[10px] text-white"></i>
+        </span>
+      </button>
+    </div>
+  </nav>
 
-            // 1. Cek LocalStorage (Apakah sudah absen dalam 24 jam terakhir?)
-            const lastAbsen = localStorage.getItem(LAST_ABSEN_KEY);
-            if (lastAbsen) {
-                const timeDiff = Date.now() - parseInt(lastAbsen);
-                if (timeDiff < HOURS_24_MS) {
-                    window.location.href = 'done.html';
-                } else {
-                    localStorage.removeItem(LAST_ABSEN_KEY);
-                }
-            }
+  <!-- Main Content -->
+  <main class="px-4 py-10 mx-auto max-w-2xl relative">
+    <div class="mb-6 text-center animate-floatup">
+      <span class="inline-flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase txt-muted mb-3">
+        <i class="fa-solid fa-clipboard-check text-brand-400"></i> Absensi Harian
+      </span>
+      <h2 class="font-display text-2xl sm:text-3xl font-bold txt-main">Form Absensi Eskul ICSO</h2>
+      <p class="text-sm txt-muted mt-1">Silakan isi kehadiranmu untuk kegiatan hari ini.</p>
+    </div>
 
-            // 2. Set Tanggal Otomatis Hari Ini (Format YYYY-MM-DD)
-            const today = new Date().toISOString().split('T')[0];
-            $('#tanggal').val(today);
+    <div class="overflow-hidden bg-card rounded-2xl border shadow-2xl shadow-black/20 animate-floatup" style="animation-delay:.08s">
+      <div class="px-6 py-4 bg-head border-b" style="border-color: rgba(114,191,242,0.14)">
+        <h2 class="text-lg font-display font-bold text-brand-400">Form Absensi Harian</h2>
+        <p class="text-sm txt-muted">Masukkan data kehadiran hari ini.</p>
+      </div>
 
-            // 3. Handle Form Submit
-            $('#absensiForm').on('submit', function(e) {
-                e.preventDefault(); 
-                
-                // Ubah text tombol saat loading
-                const $btn = $('#btnSubmit');
-                const originalText = $btn.html();
-                $btn.html('Mengirim...').prop('disabled', true);
+      <form id="absensiForm" novalidate class="p-6 space-y-6">
+        <!-- Nama -->
+        <div>
+          <label class="block mb-2 text-sm font-semibold txt-main">Nama Lengkap</label>
+          <input type="text" id="nama" name="entry.422194647" placeholder="Contoh: Tim Berners-Lee"
+            class="px-4 py-3 w-full rounded-lg transition-all">
+          <p class="err-msg hidden text-xs text-red-400 mt-1.5">Nama lengkap wajib diisi.</p>
+        </div>
 
-                // URL Action FormResponse Google Form
-                const googleFormActionURL = "https://docs.google.com/forms/d/e/1FAIpQLSfFflMMoE73G9QSCu7fO712tCHHaHqC1lCSScbupm301ctRhw/formResponse";
-                
-                // Mengambil data dari form
-                const formData = $(this).serialize();
+        <!-- Kelas -->
+        <div>
+          <label class="block mb-2 text-sm font-semibold txt-main">Kelas</label>
+          <select id="kelas" name="entry.1337916217"
+            class="px-4 py-3 w-full rounded-lg transition-all">
+            <option value="" disabled selected>Pilih Kelas</option>
+            <optgroup label="Kelas 10 RPL">
+              <option value="10 RPL 1">10 RPL 1</option>
+              <option value="10 RPL 2">10 RPL 2</option>
+              <option value="10 RPL 3">10 RPL 3</option>
+              <option value="10 RPL 4">10 RPL 4</option>
+              <option value="10 RPL 5">10 RPL 5</option>
+              <option value="10 RPL 6">10 RPL 6</option>
+              <option value="10 RPL 7">10 RPL 7</option>
+              <option value="10 RPL 8">10 RPL 8</option>
+              <option value="10 RPL 9">10 RPL 9</option>
+              <option value="10 RPL 10">10 RPL 10</option>
+              <option value="10 RPL 11">10 RPL 11</option>
+            </optgroup>
+            <optgroup label="Kelas 10 DKV">
+              <option value="10 DKV 1">10 DKV 1</option>
+              <option value="10 DKV 2">10 DKV 2</option>
+              <option value="10 DKV 3">10 DKV 3</option>
+            </optgroup>
+            <optgroup label="Kelas 11 RPL">
+              <option value="11 RPL 1">11 RPL 1</option>
+              <option value="11 RPL 2">11 RPL 2</option>
+              <option value="11 RPL 3">11 RPL 3</option>
+              <option value="11 RPL 4">11 RPL 4</option>
+              <option value="11 RPL 5">11 RPL 5</option>
+              <option value="11 RPL 6">11 RPL 6</option>
+              <option value="11 RPL 7">11 RPL 7</option>
+              <option value="11 RPL 8">11 RPL 8</option>
+              <option value="11 RPL 9">11 RPL 9</option>
+            </optgroup>
+            <optgroup label="Kelas 11 DKV">
+              <option value="11 DKV 1">11 DKV 1</option>
+              <option value="11 DKV 2">11 DKV 2</option>
+              <option value="11 DKV 3">11 DKV 3</option>
+            </optgroup>
+            <optgroup label="Kelas 12 RPL">
+              <option value="12 RPL 1">12 RPL 1</option>
+              <option value="12 RPL 2">12 RPL 2</option>
+              <option value="12 RPL 3">12 RPL 3</option>
+              <option value="12 RPL 4">12 RPL 4</option>
+              <option value="12 RPL 5">12 RPL 5</option>
+              <option value="12 RPL 6">12 RPL 6</option>
+              <option value="12 RPL 7">12 RPL 7</option>
+              <option value="12 RPL 8">12 RPL 8</option>
+              <option value="12 RPL 9">12 RPL 9</option>
+            </optgroup>
+            <optgroup label="Kelas 12 DKV">
+              <option value="12 DKV 1">12 DKV 1</option>
+              <option value="12 DKV 2">12 DKV 2</option>
+              <option value="12 DKV 3">12 DKV 3</option>
+            </optgroup>
+          </select>
+          <p class="err-msg hidden text-xs text-red-400 mt-1.5">Kelas wajib dipilih.</p>
+        </div>
 
-                // Mengirim ke Google Form secara background menggunakan AJAX
-                $.ajax({
-                    url: googleFormActionURL,
-                    data: formData,
-                    type: "POST",
-                    dataType: "xml",
-                    statusCode: {
-                        0: function() {
-                            simpanDanPindah();
-                        },
-                        200: function() {
-                            simpanDanPindah();
-                        }
-                    }
-                });
-            });
+        <!-- Tanggal (Otomatis, readonly agar tetap terkirim) -->
+        <div>
+          <label class="block mb-2 text-sm font-semibold txt-main">Tanggal</label>
+          <input type="date" id="tanggal" name="entry.1662397548" readonly
+            class="px-4 py-3 w-full rounded-lg cursor-not-allowed">
+        </div>
 
-            function simpanDanPindah() {
-                localStorage.setItem(LAST_ABSEN_KEY, Date.now());
-                window.location.href = 'done.html';
-            }
-        });
-    </script>
+        <!-- Status -->
+        <div>
+          <label class="block mb-2 text-sm font-semibold txt-main">Status Kehadiran</label>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="cursor-pointer">
+              <input type="radio" name="entry.1790518534" value="hadir" id="statusHadir" class="sr-only peer">
+              <div class="p-4 text-center rounded-xl border-2 transition-all border-brand-400/20 peer-checked:border-green-500 peer-checked:bg-green-500/10 hover:bg-brand-400/5">
+                <span class="block text-lg font-bold txt-muted peer-checked:text-green-400">Hadir</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="entry.1790518534" value="tidak hadir" id="statusTidakHadir" class="sr-only peer">
+              <div class="p-4 text-center rounded-xl border-2 transition-all border-brand-400/20 peer-checked:border-red-500 peer-checked:bg-red-500/10 hover:bg-brand-400/5">
+                <span class="block text-lg font-bold txt-muted peer-checked:text-red-400">Tidak Hadir</span>
+              </div>
+            </label>
+          </div>
+          <p class="err-msg hidden text-xs text-red-400 mt-1.5">Status kehadiran wajib dipilih.</p>
+        </div>
+
+        <!-- Alasan (muncul otomatis saat Tidak Hadir) -->
+        <div id="alasanWrapper" class="hidden">
+          <label class="block mb-2 text-sm font-semibold txt-main">Alasan</label>
+          <input type="text" id="alasan" name="entry.878733739" placeholder="Contoh: Sakit, izin keluarga, dll."
+            class="px-4 py-3 w-full rounded-lg transition-all">
+          <p class="err-msg hidden text-xs text-red-400 mt-1.5">Alasan wajib diisi jika tidak hadir.</p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-4">
+          <button type="submit" id="btnSubmit"
+            class="flex gap-2 justify-center items-center px-6 py-4 w-full font-display font-bold text-white bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-400 hover:to-brand-600 rounded-lg shadow-lg shadow-brand-900/40 transition-all active:scale-[.98]">
+            <span id="submitLabel">Kirim Absensi</span>
+            <i id="submitSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p class="text-[11px] txt-muted text-center mt-5">
+      &copy; <span id="year"></span> ICSO — Informatika Creative Student Organization
+    </p>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 translate-y-[-140%] opacity-0 z-50
+              bg-card border rounded-xl px-5 py-3 text-sm shadow-xl flex items-center gap-2">
+    <i class="fa-solid fa-circle-exclamation text-red-400"></i>
+    <span id="toastMsg">Mohon lengkapi semua data.</span>
+  </div>
+
+  <!-- Hidden iframe + mirror form untuk kirim ke Google Form tanpa reload/CORS error -->
+  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+  <form id="gformMirror" method="POST" target="hidden_iframe"
+        action="https://docs.google.com/forms/d/e/1FAIpQLSfFflMMoE73G9QSCu7fO712tCHHaHqC1lCSScbupm301ctRhw/formResponse"
+        style="display:none;">
+    <input type="text" name="entry.422194647" id="m_nama">
+    <input type="text" name="entry.1337916217" id="m_kelas">
+    <input type="text" name="entry.1662397548" id="m_tanggal">
+    <input type="text" name="entry.1790518534" id="m_status">
+    <input type="text" name="entry.878733739" id="m_alasan">
+  </form>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#year').text(new Date().getFullYear());
+
+      /* ---------- THEME TOGGLE ---------- */
+      function reflectThemeIcon() {
+        var isDark = document.documentElement.classList.contains('dark');
+        $('#themeIcon').attr('class', isDark ? 'fa-solid fa-moon text-[10px] text-white' : 'fa-solid fa-sun text-[10px] text-white');
+      }
+      reflectThemeIcon();
+
+      $('#themeToggle').on('click', function () {
+        var html = document.documentElement;
+        html.classList.toggle('dark');
+        localStorage.setItem('icso_theme', html.classList.contains('dark') ? 'dark' : 'light');
+        reflectThemeIcon();
+      });
+
+      /* ---------- Tanggal otomatis (readonly, tetap terkirim) ---------- */
+      var today = new Date().toISOString().split('T')[0];
+      $('#tanggal').val(today);
+
+      /* ---------- Alasan muncul otomatis saat "Tidak Hadir" ---------- */
+      $('input[name="entry.1790518534"]').on('change', function () {
+        if ($('#statusTidakHadir').is(':checked')) {
+          $('#alasanWrapper').removeClass('hidden');
+        } else {
+          $('#alasanWrapper').addClass('hidden');
+          $('#alasan').val('').removeClass('field-error');
+          $('#alasanWrapper .err-msg').addClass('hidden');
+        }
+      });
+
+      /* ---------- Toast ---------- */
+      function showToast(msg) {
+        $('#toastMsg').text(msg);
+        var $t = $('#toast');
+        $t.removeClass('translate-y-[-140%] opacity-0').addClass('translate-y-0 opacity-100');
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(function () {
+          $t.removeClass('translate-y-0 opacity-100').addClass('translate-y-[-140%] opacity-0');
+        }, 2600);
+      }
+
+      /* ---------- Validasi ---------- */
+      function validate() {
+        var ok = true;
+
+        // Nama
+        var $nama = $('#nama');
+        if ($.trim($nama.val()) === '') {
+          $nama.addClass('field-error'); $nama.siblings('.err-msg').removeClass('hidden'); ok = false;
+        } else {
+          $nama.removeClass('field-error'); $nama.siblings('.err-msg').addClass('hidden');
+        }
+
+        // Kelas
+        var $kelas = $('#kelas');
+        if ($.trim($kelas.val()) === '') {
+          $kelas.addClass('field-error'); $kelas.siblings('.err-msg').removeClass('hidden'); ok = false;
+        } else {
+          $kelas.removeClass('field-error'); $kelas.siblings('.err-msg').addClass('hidden');
+        }
+
+        // Status kehadiran
+        var statusChecked = $('input[name="entry.1790518534"]:checked').length > 0;
+        var $statusErr = $('input[name="entry.1790518534"]').closest('div').siblings('.err-msg');
+        if (!statusChecked) {
+          $statusErr.removeClass('hidden'); ok = false;
+        } else {
+          $statusErr.addClass('hidden');
+        }
+
+        // Alasan (wajib hanya jika Tidak Hadir)
+        if (statusChecked && $('#statusTidakHadir').is(':checked')) {
+          var $alasan = $('#alasan');
+          if ($.trim($alasan.val()) === '') {
+            $alasan.addClass('field-error'); $alasan.siblings('.err-msg').removeClass('hidden'); ok = false;
+          } else {
+            $alasan.removeClass('field-error'); $alasan.siblings('.err-msg').addClass('hidden');
+          }
+        }
+
+        return ok;
+      }
+
+      /* ---------- Submit ---------- */
+      $('#absensiForm').on('submit', function (e) {
+        e.preventDefault();
+
+        if (!validate()) {
+          showToast('Mohon lengkapi semua data yang wajib diisi.');
+          return;
+        }
+
+        var $btn = $('#btnSubmit');
+        $btn.prop('disabled', true).addClass('opacity-70 cursor-not-allowed');
+        $('#submitLabel').text('Mengirim...');
+        $('#submitSpinner').removeClass('hidden');
+
+        var statusValue = $('input[name="entry.1790518534"]:checked').val();
+
+        // isi form tersembunyi lalu kirim lewat iframe (aman dari CORS)
+        $('#m_nama').val($('#nama').val());
+        $('#m_kelas').val($('#kelas').val());
+        $('#m_tanggal').val($('#tanggal').val());
+        $('#m_status').val(statusValue);
+        $('#m_alasan').val(statusValue === 'tidak hadir' ? $('#alasan').val() : '');
+
+        document.getElementById('gformMirror').submit();
+
+        setTimeout(function () {
+          localStorage.setItem('icso_last_absen', Date.now());
+          localStorage.setItem('icso_absen_data', JSON.stringify({
+            nama: $('#nama').val(),
+            kelas: $('#kelas').val(),
+            status: statusValue,
+            tanggal: $('#tanggal').val()
+          }));
+          window.location.replace('done.html');
+        }, 1300);
+      });
+    });
+
+    // Jika halaman dipulihkan dari bfcache (tombol back), cek ulang aksesnya
+    window.addEventListener('pageshow', function () {
+      var lastAbsen = localStorage.getItem('icso_last_absen');
+      if (lastAbsen) {
+        var HOURS_24_MS = 24 * 60 * 60 * 1000;
+        if (Date.now() - parseInt(lastAbsen, 10) < HOURS_24_MS) {
+          window.location.replace('done.html');
+        }
+      }
+    });
+  </script>
 </body>
+
 </html>
